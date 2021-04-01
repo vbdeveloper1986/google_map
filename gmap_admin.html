@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<script type="text/javascript" src="mootools_unminify.js"></script>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=<APIKEY>&sensor=false"></script>
+    <script>
+	  var infowindow = new google.maps.InfoWindow();
+      function gMap()
+      {             
+		geocoder = new google.maps.Geocoder();
+									
+		map = new google.maps.Map(document.getElementById("map_canvas"), {
+			center: new google.maps.LatLng(37.4419, -122.1419),
+			zoom: 15,
+			mapTypeId: google.maps.MapTypeId.ROADMAP,
+			mapTypeControl: true,
+			mapTypeControlOptions: {
+				style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+				position: google.maps.ControlPosition.TOP_RIGHT
+			},
+			panControl: true,
+			panControlOptions: {
+				position: google.maps.ControlPosition.TOP_RIGHT
+			},
+			zoomControl: true,
+			zoomControlOptions: {
+				style: google.maps.ZoomControlStyle.LARGE,
+				position: google.maps.ControlPosition.LEFT_TOP
+			}
+		});
+		
+		// marker 
+		marker_first = new google.maps.Marker({
+			map: map,													
+			draggable:true,
+			position: map.getCenter()
+		});						
+		
+		google.maps.event.addListener(marker_first, 'dragstart', function()
+		{							
+			infowindow.close();
+		});
+		
+		google.maps.event.addListener(marker_first, 'dragend', function()
+		{			alert("Dragend another");			
+			document.adminForm.addlatitude.value=marker_first.getPosition().lat();
+			document.adminForm.addlongitude.value=marker_first.getPosition().lng();
+									
+			infowindow.setContent('<p style=width:200px; text-align:justify>Lat:'+marker_first.getPosition().lat()+', Lon:'+marker_first.getPosition().lng()+'<br><span onclick="" style="cursor:pointer;text-decoration:underline;">Use this address</span>');							
+			infowindow.open(map, marker_first);
+										
+		});						
+	
+		plotAddress();	// call plotAddress 
+    }
+    
+    function plotAddress()
+        {
+            infowindow.close();
+            var form_houseno = '267';
+            
+            if(form_houseno){
+				var form_address1 = form_houseno+',Müggelheimer Damm ';
+			}else{
+				var form_address1 = document.adminForm.addaddress1.value;
+			}
+            
+            showAddress(form_address1+',BERLIN,12559Germany');
+        }
+        
+        var markersArray = [];
+        function showAddress(address)
+		{
+		   newAddress='';
+		   fullAddress=address.split(",");
+
+		   for(i=0;i<fullAddress.length;i++)
+		   {
+				if(fullAddress[i]!='')
+				{
+				newAddress+=fullAddress[i]+",";
+				}
+
+		   }
+
+		  if (geocoder)      
+			{       														     
+				geocoder.geocode({ 'address': address }, function(results, status) {
+				  if (status == google.maps.GeocoderStatus.OK) {
+						
+						if (marker_first && marker_first.setMap) {
+							marker_first.setMap(null);
+						}
+													  
+						map.setCenter(results[0].geometry.location);
+						map.setZoom(15);																											
+						var marker = new google.maps.Marker({
+							map: map,
+							draggable:true,
+							position: results[0].geometry.location
+						});
+						
+						// remove previous marker starts
+						markersArray.push(marker);
+						
+						google.maps.Map.prototype.clearOverlays = function() {
+						  for (var i = 0; i < markersArray.length-1; i++ ) {
+							 markersArray[i].setMap(null);										 
+						  }
+						}
+						map.clearOverlays();
+						// previous marker ends
+
+						google.maps.event.addListener(marker, "click", function()
+						{alert("Click")
+							document.adminForm.addlatitude.value = marker.getPosition().lat().toFixed(7);
+							document.adminForm.addlongitude.value = marker.getPosition().lng().toFixed(7);					
+						});
+	
+						google.maps.event.addListener(marker, 'dragstart', function()
+						{						
+							infowindow.close();
+						});
+
+						google.maps.event.addListener(marker, 'dragend', function()
+						{				alert("Dragend")		
+							document.adminForm.addlatitude.value=marker.getPosition().lat();
+							document.adminForm.addlongitude.value=marker.getPosition().lng();
+						});
+						
+						infowindow.setContent("<p style=width:200px; text-align:justify>"+results[0].formatted_address+"</p>"+'<br> <span onclick="" style="cursor:pointer;text-decoration:underline;">Use this address</span>');
+							
+						infowindow.open(map, marker);
+						alert("I'm here");
+						// if lat, long field is blank
+						//if(document.adminForm.addlatitude.value=='' ||  document.adminForm.addlongitude.value=='')
+						//{
+							//document.adminForm.addlatitude.value = marker.getPosition().lat().toFixed(7);
+							//document.adminForm.addlongitude.value= marker.getPosition().lng().toFixed(7);
+							alert(marker.getPosition().lat().toFixed(7)+' / '+marker.getPosition().lng().toFixed(7));
+						//}																			
+						
+					}else{
+						alert("Address not found !! "+document.adminForm.addcity.value);
+					}
+				});
+			}
+		}
+    </script>
+  </head>
+  <body>
+	<input type="button" value="Geocode" onclick="document.getElementById('map_canvas').style.display='block' ;gMap();"/>
+    <div align="justify" id="map_canvas" style="width: 1024px; height: 300px"></div>    
+  </body>
+</html>
